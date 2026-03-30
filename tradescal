@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TONIX Trade Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #070101;
+      --bg2:          #0f0404;
+      --bg3:          #160606;
+      --panel:        #110303;
+      --border:       #2a0a0a;
+      --accent:       #DD1111;
+      --accent-dim:   #991010;
+      --accent-glow:  rgba(221,17,17,0.25);
+      --accent-faint: rgba(221,17,17,0.07);
+      --text:         #e8d8d8;
+      --text-dim:     #8a6060;
+      --text-muted:   #4a2a2a;
+      --green:        #00e676;
+      --green-dim:    rgba(0,230,118,0.15);
+      --red:          #ff3d3d;
+      --red-dim:      rgba(255,61,61,0.15);
+      --gold:         #ffd700;
+      --gold-dim:     rgba(255,215,0,0.15);
+      --font-head:    'Orbitron', monospace;
+      --font-mono:    'Share Tech Mono', monospace;
+      --radius:       6px;
+      --radius-lg:    12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0,0,0,0.08) 2px,
+          rgba(0,0,0,0.08) 4px
+        );
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 3px; }
+
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 64px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 24px rgba(0,0,0,0.6);
+    }
+
+    #topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #topbar .logo-mark {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow), inset 0 0 8px var(--accent-faint);
+      letter-spacing: 0;
+    }
+
+    #topbar .title {
+      font-family: var(--font-head);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    #topbar .subtitle {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      margin-top: 1px;
+    }
+
+    #topbar .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .btn {
+      font-family: var(--font-head);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      padding: 9px 20px;
+      outline: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.06);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .btn:hover::after { opacity: 1; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 18px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 28px var(--accent-glow), 0 4px 12px rgba(0,0,0,0.5);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      border-color: var(--accent-dim);
+      color: var(--text);
+    }
+
+    .btn-run {
+      padding: 13px 36px;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+    }
+
+    #main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+
+    #control-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    #stats-strip {
+      display: none;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+      animation: fadeSlideDown 0.4s ease both;
+    }
+
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      opacity: 0.5;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-family: var(--font-head);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-value.positive { color: var(--green); }
+    .stat-value.negative { color: var(--red); }
+
+    #table-wrapper {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: none;
+      animation: fadeSlideDown 0.4s ease 0.1s both;
+    }
+
+    #table-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #table-header .tbl-title {
+      font-family: var(--font-head);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    #table-header .trade-count {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+
+    .table-scroll {
+      max-height: 560px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 10px 16px;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-align: right;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    thead th:first-child,
+    thead th:nth-child(2) { text-align: left; }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(42,10,10,0.5);
+      transition: background 0.12s;
+    }
+
+    tbody tr:hover { background: rgba(221,17,17,0.04); }
+    tbody tr.win-row  { background: rgba(0,230,118,0.03); }
+    tbody tr.loss-row { background: rgba(255,61,61,0.03); }
+    tbody tr.reset-row { background: rgba(255,215,0,0.04); }
+
+    tbody td {
+      padding: 9px 16px;
+      font-size: 12px;
+      text-align: right;
+      white-space: nowrap;
+      color: var(--text-dim);
+    }
+
+    tbody td:first-child { text-align: left; }
+    tbody td:nth-child(2) { text-align: left; }
+
+    .trade-num {
+      font-family: var(--font-head);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-win  { background: var(--green-dim); color: var(--green); }
+    .badge-loss { background: var(--red-dim);   color: var(--red);   }
+
+    .amount { color: var(--text); }
+    .pnl-win  { color: var(--green); }
+    .pnl-loss { color: var(--red);   }
+
+    .balance-cell { color: var(--text); font-family: var(--font-head); font-size: 11px; }
+
+    .streak-star {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--gold);
+      font-size: 14px;
+      filter: drop-shadow(0 0 4px var(--gold));
+    }
+
+    .streak-star span {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      opacity: 0.8;
+    }
+
+    #empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      gap: 16px;
+    }
+
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      color: var(--text-muted);
+      background: var(--bg2);
+    }
+
+    .empty-title {
+      font-family: var(--font-head);
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .empty-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    #overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(7,1,1,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #overlay.open { display: flex; }
+
+    #settings-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 420px;
+      max-width: 95vw;
+      padding: 28px;
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 0 40px rgba(221,17,17,0.08);
+      animation: panelIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    @keyframes panelIn {
+      from { opacity: 0; transform: scale(0.92) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .panel-title {
+      font-family: var(--font-head);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .close-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .close-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+    .setting-row { margin-bottom: 22px; }
+
+    .setting-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .setting-name {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .setting-val {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 14px var(--accent);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+      cursor: pointer;
+      border: none;
+    }
+
+    input[type="range"].filled {
+      background: linear-gradient(
+        to right,
+        var(--accent) 0%,
+        var(--accent) var(--pct, 0%),
+        var(--border) var(--pct, 0%),
+        var(--border) 100%
+      );
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
+
+    .slider-ticks span {
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    .number-input-wrap { position: relative; }
+
+    .number-input-wrap input[type="number"] {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+      padding: 10px 48px 10px 16px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .number-input-wrap input[type="number"]:focus {
+      border-color: var(--accent-dim);
+    }
+
+    .number-input-wrap .currency {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      pointer-events: none;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { opacity: 0; }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 22px 0;
+    }
+
+    .panel-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    #legend {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 2px;
+    }
+
+    #glow-line {
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+      opacity: 0.35;
+      margin-bottom: 28px;
+      border-radius: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="topbar">
+    <div class="brand">
+      <div class="logo-mark">TX</div>
+      <div>
+        <div class="title">TONIX Trade Simulator</div>
+        <div class="subtitle">POSITION SIZING ENGINE · v1.0</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-dot"></div>
+      <span style="font-size:10px;color:var(--text-dim);letter-spacing:.1em">SYSTEM READY</span>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <div id="glow-line"></div>
+
+    <div id="control-row">
+      <button class="btn btn-primary btn-run" id="btn-run" onclick="runSimulation()">
+        ▶&nbsp; RUN SIMULATION
+      </button>
+      <button class="btn btn-ghost" id="btn-settings" onclick="openSettings()">
+        ⚙&nbsp; SETTINGS
+      </button>
+      <span id="config-preview" style="font-size:10px;color:var(--text-muted);letter-spacing:.1em;margin-left:6px;"></span>
+    </div>
+
+    <div id="stats-strip">
+      <div class="stat-card">
+        <div class="stat-label">Final Balance</div>
+        <div class="stat-value" id="stat-balance">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Net P&amp;L</div>
+        <div class="stat-value" id="stat-pnl">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Win Rate</div>
+        <div class="stat-value" id="stat-winrate">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Best Trade</div>
+        <div class="stat-value positive" id="stat-best">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Worst Trade</div>
+        <div class="stat-value negative" id="stat-worst">—</div>
+      </div>
+    </div>
+
+    <div id="legend" style="display:none;">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--green);opacity:.6"></div> Win trade
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--red);opacity:.6"></div> Loss trade
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--gold);opacity:.6"></div>
+        ★ Streak complete — cycle resets
+      </div>
+    </div>
+
+    <div id="table-wrapper">
+      <div id="table-header">
+        <span class="tbl-title">TRADE LOG · 100 SIMULATED TRADES</span>
+        <span class="trade-count" id="trade-count-label"></span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Result</th>
+              <th>Amount Risked</th>
+              <th>Profit / Loss</th>
+              <th>Balance After</th>
+              <th>Streak</th>
+            </tr>
+          </thead>
+          <tbody id="trade-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="empty-state">
+      <div class="empty-icon">◈</div>
+      <div class="empty-title">No Simulation Run</div>
+      <div class="empty-sub">Press RUN SIMULATION to generate 100 trades</div>
+    </div>
+
+  </div>
+
+  <div id="overlay" onclick="overlayClick(event)">
+    <div id="settings-panel">
+
+      <div class="panel-header">
+        <div class="panel-title">⚙ Simulation Parameters</div>
+        <button class="close-btn" onclick="closeSettings()">✕</button>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-name">Risk / Reward Ratio</span>
+          <span class="setting-val" id="rr-display">1 : 1.9</span>
+        </div>
+        <input type="range" class="filled" id="rr-slider"
+          min="10" max="50" step="1" value="19"
+          oninput="updateSlider('rr')" />
+        <div class="slider-ticks">
+          <span>1:1</span><span>1:2</span><span>1:3</span><span>1:4</span><span>1:5</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-name">Win Rate</span>
+          <span class="setting-val" id="wr-display">67%</span>
+        </div>
+        <input type="range" class="filled" id="wr-slider"
+          min="10" max="90" step="1" value="67"
+          oninput="updateSlider('wr')" />
+        <div class="slider-ticks">
+          <span>10%</span><span>30%</span><span>50%</span><span>70%</span><span>90%</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-name">Win Streak Before Reset</span>
+          <span class="setting-val" id="ws-display">2 Wins</span>
+        </div>
+        <input type="range" class="filled" id="ws-slider"
+          min="1" max="5" step="1" value="2"
+          oninput="updateSlider('ws')" />
+        <div class="slider-ticks">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="setting-row" style="margin-bottom:0;">
+        <div class="setting-label">
+          <span class="setting-name">Starting Balance</span>
+        </div>
+        <div class="number-input-wrap">
+          <input type="number" id="balance-input" value="10000" min="100" step="100" />
+          <span class="currency">USD</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="panel-footer">
+        <button class="btn btn-ghost" onclick="closeSettings()">CANCEL</button>
+        <button class="btn btn-primary" onclick="saveAndClose()">APPLY &amp; CLOSE</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      rr:       1.9,
+      winRate:  0.67,
+      streak:   2,
+      balance:  10000
+    };
+
+    function updateSlider(type) {
+      if (type === 'rr') {
+        const raw = parseInt(document.getElementById('rr-slider').value);
+        const rr = raw / 10;
+        document.getElementById('rr-display').textContent = `1 : ${rr.toFixed(1)}`;
+        setSliderFill('rr-slider', raw, 10, 50);
+      }
+      if (type === 'wr') {
+        const raw = parseInt(document.getElementById('wr-slider').value);
+        document.getElementById('wr-display').textContent = `${raw}%`;
+        setSliderFill('wr-slider', raw, 10, 90);
+      }
+      if (type === 'ws') {
+        const raw = parseInt(document.getElementById('ws-slider').value);
+        document.getElementById('ws-display').textContent = `${raw} Win${raw > 1 ? 's' : ''}`;
+        setSliderFill('ws-slider', raw, 1, 5);
+      }
+    }
+
+    function setSliderFill(id, val, min, max) {
+      const pct = ((val - min) / (max - min)) * 100;
+      document.getElementById(id).style.setProperty('--pct', pct + '%');
+    }
+
+    function initSliders() {
+      setSliderFill('rr-slider', 19, 10, 50);
+      setSliderFill('wr-slider', 67, 10, 90);
+      setSliderFill('ws-slider', 2,  1,  5);
+      updateSlider('rr');
+      updateSlider('wr');
+      updateSlider('ws');
+      updateConfigPreview();
+    }
+
+    function openSettings() {
+      document.getElementById('rr-slider').value = Math.round(state.rr * 10);
+      document.getElementById('wr-slider').value = Math.round(state.winRate * 100);
+      document.getElementById('ws-slider').value = state.streak;
+      document.getElementById('balance-input').value = state.balance;
+      updateSlider('rr');
+      updateSlider('wr');
+      updateSlider('ws');
+      document.getElementById('overlay').classList.add('open');
+    }
+
+    function closeSettings() {
+      document.getElementById('overlay').classList.remove('open');
+    }
+
+    function overlayClick(e) {
+      if (e.target === document.getElementById('overlay')) closeSettings();
+    }
+
+    function saveAndClose() {
+      state.rr      = parseInt(document.getElementById('rr-slider').value) / 10;
+      state.winRate = parseInt(document.getElementById('wr-slider').value) / 100;
+      state.streak  = parseInt(document.getElementById('ws-slider').value);
+      state.balance = parseFloat(document.getElementById('balance-input').value) || 10000;
+      updateConfigPreview();
+      closeSettings();
+    }
+
+    function updateConfigPreview() {
+      document.getElementById('config-preview').textContent =
+        `RR 1:${state.rr.toFixed(1)}  ·  WR ${(state.winRate * 100).toFixed(0)}%  ·  Reset @${state.streak}W  ·  $${state.balance.toLocaleString()}`;
+    }
+
+    function runSimulation() {
+      const TRADES = 100;
+      let balance       = state.balance;
+      const startBal    = balance;
+      const rr          = state.rr;
+      const winProb     = state.winRate;
+      const streakReset = state.streak;
+
+      let currentRisk = balance / 15;
+      let winStreak   = 0;
+      const trades    = [];
+      let totalWins   = 0;
+      let bestTrade   = -Infinity;
+      let worstTrade  = Infinity;
+
+      for (let i = 1; i <= TRADES; i++) {
+        const risk      = currentRisk;
+        const isWin     = Math.random() < winProb;
+        let pnl;
+        let resetFlag   = false;
+
+        if (isWin) {
+          pnl       = risk * rr;
+          balance  += pnl;
+          winStreak++;
+          totalWins++;
+
+          if (winStreak >= streakReset) {
+            resetFlag   = true;
+            winStreak   = 0;
+            currentRisk = balance / 15;
+          } else {
+            currentRisk = risk * (rr + 1);
+          }
+        } else {
+          pnl         = -(risk);
+          balance    += pnl;
+          winStreak   = 0;
+          currentRisk = balance / 15;
+        }
+
+        if (pnl > bestTrade)  bestTrade  = pnl;
+        if (pnl < worstTrade) worstTrade = pnl;
+
+        trades.push({ num: i, isWin, risk, pnl, balance, resetFlag });
+      }
+
+      renderTable(trades, startBal);
+      renderStats(balance, startBal, totalWins, TRADES, bestTrade, worstTrade);
+    }
+
+    function renderTable(trades, startBal) {
+      const tbody = document.getElementById('trade-table-body');
+      tbody.innerHTML = '';
+
+      trades.forEach(t => {
+        const tr = document.createElement('tr');
+
+        if (t.resetFlag)       tr.classList.add('reset-row');
+        else if (t.isWin)      tr.classList.add('win-row');
+        else                   tr.classList.add('loss-row');
+
+        const pnlClass   = t.pnl >= 0 ? 'pnl-win' : 'pnl-loss';
+        const pnlSign    = t.pnl >= 0 ? '+' : '';
+        const streakCell = t.resetFlag
+          ? `<span class="streak-star">★ <span>RESET</span></span>`
+          : `<span style="color:var(--text-muted);font-size:11px;">—</span>`;
+
+        tr.innerHTML = `
+          <td><span class="trade-num">${String(t.num).padStart(3,'0')}</span></td>
+          <td><span class="badge badge-${t.isWin ? 'win' : 'loss'}">${t.isWin ? 'WIN' : 'LOSS'}</span></td>
+          <td class="amount">${fmt(t.risk)}</td>
+          <td class="${pnlClass}">${pnlSign}${fmt(t.pnl)}</td>
+          <td class="balance-cell">${fmt(t.balance)}</td>
+          <td>${streakCell}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('table-wrapper').style.display = 'block';
+      document.getElementById('legend').style.display = 'flex';
+
+      const wins = trades.filter(t => t.isWin).length;
+      document.getElementById('trade-count-label').textContent =
+        `${wins} wins · ${trades.length - wins} losses`;
+    }
+
+    function renderStats(finalBal, startBal, wins, total, best, worst) {
+      const netPnl = finalBal - startBal;
+      document.getElementById('stat-balance').textContent  = fmt(finalBal);
+      document.getElementById('stat-pnl').textContent      = (netPnl >= 0 ? '+' : '') + fmt(netPnl);
+      document.getElementById('stat-pnl').className        = 'stat-value ' + (netPnl >= 0 ? 'positive' : 'negative');
+      document.getElementById('stat-winrate').textContent  = ((wins / total) * 100).toFixed(1) + '%';
+      document.getElementById('stat-best').textContent     = '+' + fmt(best);
+      document.getElementById('stat-worst').textContent    = fmt(worst);
+      document.getElementById('stats-strip').style.display = 'grid';
+    }
+
+    function fmt(n) {
+      return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initSliders();
+      updateConfigPreview();
+    });
+  </script>
+</body>
+</html>
